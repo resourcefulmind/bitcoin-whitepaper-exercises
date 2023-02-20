@@ -28,16 +28,60 @@ Blockchain.blocks.push({
 });
 
 // TODO: insert each line into blockchain
-// for (let line of poem) {
-// }
+for(let line of poem) {
+	Blockchain.blocks.push(
+		createBlock(line)
+	)
+}
 
-// console.log(`Blockchain is valid: ${verifyChain(Blockchain)}`);
+
+console.log(`Blockchain is valid: ${verifyChain(Blockchain)}`);
 
 
 // **********************************
 
+// createBlock(..) function which takes the text for its data
+function createBlock(data) {
+	// create object for the block
+	var bl = {
+		index: Blockchain.blocks.length, 
+		prevHash: Blockchain.blocks[Blockchain.blocks.length - 1].hash, 
+		data, 
+		timestamp: Date.now(), 
+	}
+
+	bl.hash = blockHash(bl);
+	return bl;
+}
+
 function blockHash(bl) {
 	return crypto.createHash("sha256").update(
 		// TODO: use block data to calculate hash
+		`${bl.index};${bl.prevHash};${JSON.stringify(bl.data)};${bl.timestamp}`
 	).digest("hex");
 }
+
+function verifyBlock(bl) {
+	if(bl.data == null) return false;
+	if(bl.index === 0) {
+		if(bl.hash !== "000000") return false;
+	} else {
+		if(!bl.prevHash) return false;
+		if(!( typeof bl.index === "number" && Number.isInteger(bl.index) && bl.index > 0 )) {
+			return false;
+		}
+		if (bl.hash !== blockHash(bl)) return false;
+	}
+	return true;
+}
+
+function verifyChain(chain) {
+	var prevHash;
+	for (let bl of chain.blocks) {
+		if(prevHash && bl.prevHash !== prevHash) return false;
+		if (!verifyBlock(bl)) return false;
+		prevHash = bl.hash;
+	}
+	return true;
+}
+
